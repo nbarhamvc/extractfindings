@@ -42,6 +42,11 @@ Arguments supported include:
 At least one of the 2 import options need to be set: -a (--agent) or -u (--upload)
 
 ## Results
-The results will be saved to .csv files.
-Agent-based scan results will be saved using the following format: <target_folder>/<workspace_name>/<project_name>.csv
-Upload and Scan results will be saved using the following format: <target_folder>/<application_name>.csv
+The results will be saved to .csv files.  
+- Agent-based scan results will be saved using the following format:
+
+`<target_folder>/<workspace_name>/<project_name>.csv`
+
+- Upload and Scan results will be saved using the following format:
+
+`<target_folder>/<application_name>.csv`
