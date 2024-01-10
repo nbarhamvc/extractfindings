@@ -243,7 +243,7 @@ def parse_issue(issue):
                   'Library ID': issue['library']['id'],
                   'Library Version': issue['library']['version'],
                   'CWE': get_issue_optional_field(vulnerability, "cwe_id"),
-                  'CVE': get_issue_optional_field(vulnerability, "cve_full"),
+                  'CVE': get_issue_optional_field(vulnerability, "cve"),
                   'CVSS 2': get_issue_optional_field(vulnerability, 'cvss2_score'),
                   'CVSS 3': get_issue_optional_field(vulnerability, 'cvss3_score') }
     if 'exploitability' in vulnerability:
