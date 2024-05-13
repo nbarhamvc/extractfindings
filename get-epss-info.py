@@ -222,7 +222,7 @@ def parse_finding(finding):
     return finding_row
 
 def get_epss_for_application_findings(application, api_base, verbose):
-    base_findings = get_epss_for_application_findings_internal(application, 1, api_base, verbose)
+    base_findings = get_epss_for_application_findings_internal(application, 0, api_base, verbose)
     parsed_list = []
     for finding in base_findings:
         parsed_list.append(parse_finding(finding))
@@ -257,7 +257,7 @@ def parse_issue(issue):
     
 
 def get_epss_for_agent_issues(workspace, project, api_base, verbose):
-    base_issues = get_epss_for_agent_issues_internal(workspace, project, 1, api_base, verbose)
+    base_issues = get_epss_for_agent_issues_internal(workspace, project, 0, api_base, verbose)
     parsed_list = []
     for issue in base_issues:
         if issue['issue_type'] == "vulnerability":
