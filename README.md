@@ -1,5 +1,3 @@
-# Veracode-Get-EPSS-Info
-
 Gets count of High/Very High SAST findings per applciation profile, including scan name and application profile name:
 
 *Note*: This script requires Python 3!
