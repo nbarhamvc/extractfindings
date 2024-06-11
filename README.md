@@ -31,7 +31,7 @@ Otherwise you will need to set environment variables:
 
     export VERACODE_API_KEY_ID=<YOUR_API_KEY_ID>
     export VERACODE_API_KEY_SECRET=<YOUR_API_KEY_SECRET>
-    python Veracodeextractfindings.py (arguments)
+    python extract_finding_totals.py (arguments)
 
 Arguments supported include:
 - `-t`, `--target` - (mandatory) File to save results
