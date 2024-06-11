@@ -183,11 +183,8 @@ def save_to_excel(applications, file_name):
         print(f"ERROR: No findings found")
 
 def save_all_upload_scans(rest_api_base, xml_api_base, target_file, verbose):
-    if not os.path.isfile(target_file):
-        print(f"ERROR: Invalid target file name: {target_file}")
-        sys.exit(-1)
     _, extension = os.path.splitext(target_file)
-    if not extension or extension.lower() != "csv":
+    if not extension or extension.lower() != ".csv":
         print(f"ERROR: File name '{target_file}' needs to be a CSV file.")
         sys.exit(-1)
 
