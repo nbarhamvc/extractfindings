@@ -5,6 +5,8 @@ import requests
 import argparse
 import csv
 import time
+import os.path
+from pathlib import Path
 from veracode_api_signing.plugin_requests import RequestsAuthPluginVeracodeHMAC
 from veracode_api_signing.credentials import get_credentials
 import xml.dom.minidom as xml
@@ -166,6 +168,9 @@ def get_application_results(application, rest_api_base, xml_api_base, verbose):
     }
 
 def save_to_excel(applications, file_name):
+    directory = os.path.dirname(file_name)
+    if not os.path.exists(directory):
+        os.makedirs(directory)
     if applications:
         with open(file_name, 'w', newline='') as csvfile:
             csv_writer = csv.writer(csvfile)
@@ -178,6 +183,14 @@ def save_to_excel(applications, file_name):
         print(f"ERROR: No findings found")
 
 def save_all_upload_scans(rest_api_base, xml_api_base, target_file, verbose):
+    if not os.path.isfile(target_file):
+        print(f"ERROR: Invalid target file name: {target_file}")
+        sys.exit(-1)
+    _, extension = os.path.splitext(target_file)
+    if not extension or extension.lower() != "csv":
+        print(f"ERROR: File name '{target_file}' needs to be a CSV file.")
+        sys.exit(-1)
+
     applications = []
     for application in get_all_applications(rest_api_base, 0, verbose):
         applications.append(get_application_results(application, rest_api_base, xml_api_base, verbose))
@@ -190,7 +203,7 @@ def main():
         parser = argparse.ArgumentParser(
         description='This script will create an excel file with a summary of all your SAST scans')
         
-        parser.add_argument('-t', '--target', help='File to save results')
+        parser.add_argument('-t', '--target', help='CSV file to save results')
         parser.add_argument('-d', '--debug', action='store_true', help='Set to enable verbose logging')
 
         args = parser.parse_args()
