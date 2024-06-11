@@ -1,3 +1,5 @@
+**Credit to Ricardo P for this script**
+
 Gets count of High/Very High SAST findings per applciation profile, including scan name and application profile name:
 
 *Note*: This script requires Python 3!
