@@ -25,7 +25,7 @@ Install dependencies:
 
 If you have saved credentials as above you can run:
 
-    python Veracodeextractfindings.py (arguments)
+    python extract_finding_totals.py (arguments)
 
 Otherwise you will need to set environment variables:
 
@@ -34,12 +34,8 @@ Otherwise you will need to set environment variables:
     python Veracodeextractfindings.py (arguments)
 
 Arguments supported include:
-- `-t`, `--target` - (mandatory) Folder to save results.
+- `-t`, `--target` - (mandatory) File to save results
 - `-d`, `--debug` Set to enable verbose logging.
 
 ## Results
-The results will be saved to .csv files.  
-
-- Results will be saved using the following format:
-
-`<target_folder>/<application_name>.csv`
+The results will be saved to a .csv file.  
