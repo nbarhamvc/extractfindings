@@ -1,6 +1,6 @@
 # Veracode-Get-EPSS-Info
 
-Gets all the SCA findings available to the user, including EPSS scores and percentiles:
+Gets count of High/Very High SAST findings per applciation profile, including scan name and application profile name:
 
 *Note*: This script requires Python 3!
 
@@ -8,11 +8,11 @@ Gets all the SCA findings available to the user, including EPSS scores and perce
 
 Clone this repository:
 
-    git clone https://github.com/cadonuno/Veracode-Get-EPSS-Info
+    git clone https://github.com/nbarhamvc/extractfindings
 
 Install dependencies:
 
-    cd Veracode-Get-EPSS-Info
+    cd extractfindings
     pip install -r requirements.txt
 
 (Optional) Save Veracode API credentials in `~/.veracode/credentials`
@@ -25,28 +25,21 @@ Install dependencies:
 
 If you have saved credentials as above you can run:
 
-    python get-epss-info.py (arguments)
+    python Veracodeextractfindings.py (arguments)
 
 Otherwise you will need to set environment variables:
 
     export VERACODE_API_KEY_ID=<YOUR_API_KEY_ID>
     export VERACODE_API_KEY_SECRET=<YOUR_API_KEY_SECRET>
-    python get-epss-info.py (arguments)
+    python Veracodeextractfindings.py (arguments)
 
 Arguments supported include:
 - `-t`, `--target` - (mandatory) Folder to save results.
-- `-a`, `--agent` - Set to import results from Agent-based SCA.
-- `-u`, `--upload` - Set to import results from Upload and Sca SCA.
 - `-d`, `--debug` Set to enable verbose logging.
-
-At least one of the 2 import options need to be set: -a (--agent) or -u (--upload)
 
 ## Results
 The results will be saved to .csv files.  
-- Agent-based scan results will be saved using the following format:
 
-`<target_folder>/<workspace_name>/<project_name>.csv`
-
-- Upload and Scan results will be saved using the following format:
+- Results will be saved using the following format:
 
 `<target_folder>/<application_name>.csv`
