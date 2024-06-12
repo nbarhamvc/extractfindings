@@ -169,7 +169,7 @@ def get_application_results(application, rest_api_base, xml_api_base, verbose):
 
 def save_to_excel(applications, file_name):
     directory = os.path.dirname(file_name)
-    if not os.path.exists(directory):
+    if directory and not os.path.exists(directory):
         os.makedirs(directory)
     if applications:
         with open(file_name, 'w', newline='') as csvfile:
