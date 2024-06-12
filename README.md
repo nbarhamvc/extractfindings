@@ -25,13 +25,13 @@ Install dependencies:
 
 If you have saved credentials as above you can run:
 
-    python extract_finding_totals.py (arguments)
+    py extract_finding_totals.py (arguments)
 
 Otherwise you will need to set environment variables:
 
     export VERACODE_API_KEY_ID=<YOUR_API_KEY_ID>
     export VERACODE_API_KEY_SECRET=<YOUR_API_KEY_SECRET>
-    python extract_finding_totals.py (arguments)
+    py extract_finding_totals.py (arguments)
 
 Arguments supported include:
 - `-t`, `--target` - (mandatory) File to save results
