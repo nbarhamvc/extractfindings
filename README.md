@@ -34,7 +34,7 @@ Otherwise you will need to set environment variables:
     py extract_finding_totals.py (arguments)
 
 Arguments supported include:
-- `-t`, `--target` - (mandatory) File to save results
+- `-t`, `--target` - (mandatory) File to save results - must be .csv.
 - `-d`, `--dast` Set to enable fetching of DAST results.
 - `-s`, `--sca` Set to enable fetching of SCA results.
 - `-v`, `--verbose` Set to enable verbose logging.

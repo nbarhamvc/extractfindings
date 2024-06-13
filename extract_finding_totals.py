@@ -6,7 +6,6 @@ import argparse
 import csv
 import time
 import os.path
-from pathlib import Path
 from veracode_api_signing.plugin_requests import RequestsAuthPluginVeracodeHMAC
 from veracode_api_signing.credentials import get_credentials
 import xml.dom.minidom as xml
@@ -22,11 +21,12 @@ xml_header = {
 }
 
 def print_help():
-    print("""extractfindings.py -t <target_folder> [-a] [-u] [-d]
-        Extracts SAST findings (High/Very High) for all access app profiles on the Veracode platform into a folder""")
+    print("""extractfindings.py -t <target_file(.csv)> [-d] [-s] [-d]
+        Gets count of ALL findings for all available application profiles, including latest scan names and dates, and saves it to <target_file>""")
     print("Optional arguments: ")
-    print(" -u: to extract findings from app profiles")
-    print(" -d: to output debug-level logs")
+    print(" -d: set to enable fetching of DAST results")
+    print(" -s: set to enable fetching of SCA results")
+    print(" -v: to output verbose logs")
     sys.exit()
 
 def get_rest_api_base():
