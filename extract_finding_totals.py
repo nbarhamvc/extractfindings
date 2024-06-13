@@ -180,7 +180,15 @@ def get_findings_totals(application, rest_api_base, scan_type, verbose):
 
     return findings_totals
 
-def get_application_results(application, rest_api_base, xml_api_base, is_dast, is_sca, verbose):
+def parse_custom_fields(custom_fields_node):
+    custom_fields_dict = {}
+    if custom_fields_node:
+        for custom_field in custom_fields_node:
+            custom_fields_dict[custom_field["name"]] = custom_field["value"]
+
+    return custom_fields_dict
+
+def get_application_results(application, rest_api_base, xml_api_base, custom_field_list, is_dast, is_sca, verbose):
     sast_totals = get_findings_totals(application, rest_api_base, "STATIC", verbose)
     if is_dast:
         dast_totals = get_findings_totals(application, rest_api_base, "DYNAMIC", verbose)
@@ -202,10 +210,20 @@ def get_application_results(application, rest_api_base, xml_api_base, is_dast, i
         'Application ID': application["id"],
         'Application GUID': application["guid"],
 
-        'Latest SAST Scan Name': get_latest_scan_name(xml_api_base, application, verbose),
-        
-        'Latest SAST Scan Date': latest_sast_scan
     }
+
+    if custom_field_list and "custom_fields" in application["profile"]:
+        custom_fields_dict = parse_custom_fields(application["profile"]["custom_fields"])
+        for custom_field in custom_field_list:
+            if custom_field in custom_fields_dict:
+                results[custom_field] = custom_fields_dict[custom_field]
+            else:
+                results[custom_field] = ''
+
+    results.update({        
+        'Latest SAST Scan Name': get_latest_scan_name(xml_api_base, application, verbose),
+        'Latest SAST Scan Date': latest_sast_scan
+    })
     if is_dast:
         results['Latest DAST Scan Date'] = latest_dast_scan
 
@@ -274,15 +292,20 @@ def save_to_excel(applications, file_name):
     else:
         print(f"ERROR: No findings found")
 
-def save_all_scan_results(rest_api_base, xml_api_base, target_file, is_dast, is_sca, verbose):
+def save_all_scan_results(rest_api_base, xml_api_base, target_file, custom_fields, is_dast, is_sca, verbose):
     _, extension = os.path.splitext(target_file)
     if not extension or extension.lower() != ".csv":
         print(f"ERROR: File name '{target_file}' needs to be a CSV file.")
         sys.exit(-1)
 
+    custom_field_list = []
+    if custom_fields:
+        for custom_field in custom_fields.split(","):
+            custom_field_list.append(custom_field.strip())
+
     applications = []
     for application in get_all_applications(rest_api_base, 0, verbose):
-        applications.append(get_application_results(application, rest_api_base, xml_api_base, is_dast, is_sca, verbose))
+        applications.append(get_application_results(application, rest_api_base, xml_api_base, custom_field_list, is_dast, is_sca, verbose))
 
     save_to_excel(applications, target_file)
 
@@ -295,6 +318,7 @@ def main():
         parser.add_argument('-t', '--target', help='CSV file to save results')
         parser.add_argument('-d', '--dast', action='store_true', help='Set to enable fetching of DAST results')
         parser.add_argument('-s', '--sca', action='store_true', help='Set to enable fetching of SCA results')
+        parser.add_argument('-c', '--customfields', help='Comma-delimited list of custom fields to fetch')
         parser.add_argument('-v', '--verbose', action='store_true', help='Set to enable verbose logging')
 
         args = parser.parse_args()
@@ -302,11 +326,12 @@ def main():
         target_file = args.target
         is_dast = args.dast
         is_sca = args.sca
+        custom_fields = args.customfields
         verbose = args.verbose
 
         rest_api_base = get_rest_api_base() 
         xml_api_base = get_xml_api_base()
-        save_all_scan_results(rest_api_base, xml_api_base, target_file, is_dast, is_sca, verbose)
+        save_all_scan_results(rest_api_base, xml_api_base, target_file, custom_fields, is_dast, is_sca, verbose)
 
     except requests.RequestException as e:
         print("An error occurred!")

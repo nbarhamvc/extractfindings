@@ -37,6 +37,7 @@ Arguments supported include:
 - `-t`, `--target` - (mandatory) File to save results - must be .csv.
 - `-d`, `--dast` Set to enable fetching of DAST results.
 - `-s`, `--sca` Set to enable fetching of SCA results.
+- `-c`, `--custom` Comma-delimited list of custom fields to fetch.
 - `-v`, `--verbose` Set to enable verbose logging.
 
 ## Results
