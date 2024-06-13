@@ -1,6 +1,6 @@
 **Credit to Ricardo P for this script**
 
-Gets count of High/Very High SAST findings per applciation profile, including scan name and application profile name:
+Gets count of ALL findings for all available application profiles. Also includes latest scan names and dates.
 
 *Note*: This script requires Python 3!
 
@@ -35,7 +35,9 @@ Otherwise you will need to set environment variables:
 
 Arguments supported include:
 - `-t`, `--target` - (mandatory) File to save results
-- `-d`, `--debug` Set to enable verbose logging.
+- `-d`, `--dast` Set to enable fetching of DAST results.
+- `-s`, `--sca` Set to enable fetching of SCA results.
+- `-v`, `--verbose` Set to enable verbose logging.
 
 ## Results
 The results will be saved to a .csv file.  

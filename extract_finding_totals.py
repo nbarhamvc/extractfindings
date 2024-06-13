@@ -80,9 +80,9 @@ def get_all_applications(rest_api_base, page, verbose):
         print(f"Unable to obtain application list: {response.status_code}")
         return []
 
-def get_findings_for_app(application, page, rest_api_base, verbose):
+def get_findings_for_app_and_scan_type(application, page, rest_api_base, scan_type, verbose):
     print(f"Getting findings for application {application['profile']['name']} - page {page}")
-    path = f"{rest_api_base}appsec/v2/applications/{application['guid']}/findings?scan_type=Static&severity_gte=4&page={page}"
+    path = f"{rest_api_base}appsec/v2/applications/{application['guid']}/findings?scan_type={scan_type}&page={page}"
 
     if verbose:
         print(f"Calling API at {path}")
@@ -95,19 +95,19 @@ def get_findings_for_app(application, page, rest_api_base, verbose):
         if body:
             print(body)
     if response.status_code == 200:
-        print(f"Successfully obtained findings page {page}")
+        print(f"Successfully obtained {scan_type} findings page {page}")
         if "_embedded" in body and "findings" in body["_embedded"]:
             findings = body["_embedded"]["findings"]
             if has_more_pages(body):
-                return findings + get_findings_for_app(application, page+1, rest_api_base, verbose)
+                return findings + get_findings_for_app_and_scan_type(application, page+1, rest_api_base, scan_type, verbose)
             else:
                 return findings
         return []
     elif response.status_code == 429:
         handle_throttling()
-        return get_findings_for_app(application, page, rest_api_base, verbose)
+        return get_findings_for_app_and_scan_type(application, page, rest_api_base, scan_type, verbose)
     else:
-        print(f"Unable to obtain findings: {response.status_code}")
+        print(f"Unable to obtain {scan_type} findings: {response.status_code}")
         return []
 
 def get_latest_scan_name(xml_api_base, application, verbose):
@@ -139,33 +139,125 @@ def get_latest_scan_name(xml_api_base, application, verbose):
         print(f"Unable to obtain application information: {response.status_code}")
         return ""
 
-def get_application_results(application, rest_api_base, xml_api_base, verbose):
-    base_findings = get_findings_for_app(application, 0, rest_api_base, verbose)
-    total_open_very_high = 0
-    total_open_high = 0
-    total_closed_very_high = 0
-    total_closed_high = 0
-
-    for finding in base_findings:
-        if finding['finding_status']['status'] == "OPEN":
-            if finding['finding_details']['severity'] == 5:
-                total_open_very_high += 1
-            elif finding['finding_details']['severity'] == 4:
-                total_open_high += 1
-        else:
-            if finding['finding_details']['severity'] == 5:
-                total_closed_very_high += 1
-            elif finding['finding_details']['severity'] == 4:
-                total_closed_high += 1
-
-    return {
-        'Application Name': application["profile"]["name"],
-        'Very High Findings (Open)': total_open_very_high,
-        'High Findings (Open)': total_open_high,
-        'Very High Findings (Closed)': total_closed_very_high,
-        'High Findings (Closed)': total_closed_high,
-        'Last Scan Name': get_latest_scan_name(xml_api_base, application, verbose)
+def get_findings_totals(application, rest_api_base, scan_type, verbose):
+    findings = get_findings_for_app_and_scan_type(application, 0, rest_api_base, scan_type, verbose)
+    findings_totals = {
+        "open": {
+            "very_high": 0,
+            "high": 0,
+            "medium": 0,
+            "low": 0,
+            "very_low": 0,
+            "informational": 0
+        },
+        "closed": {
+            "very_high": 0,
+            "high": 0,
+            "medium": 0,
+            "low": 0,
+            "very_low": 0,
+            "informational": 0
+        }
     }
+
+    for finding in findings:
+        open_or_closed = "open" if finding['finding_status']['status'] == "OPEN" else "closed"
+        severity = ''
+        match finding['finding_details']['severity']:
+            case 5:
+                severity = 'very_high'
+            case 4:
+                severity = 'high'
+            case 3:
+                severity = 'medium'
+            case 2:
+                severity = 'low'
+            case 1:
+                severity = 'very_low'
+            case 0:
+                severity = 'informational'
+        findings_totals[open_or_closed][severity] += 1
+
+    return findings_totals
+
+def get_application_results(application, rest_api_base, xml_api_base, is_dast, is_sca, verbose):
+    sast_totals = get_findings_totals(application, rest_api_base, "STATIC", verbose)
+    if is_dast:
+        dast_totals = get_findings_totals(application, rest_api_base, "DYNAMIC", verbose)
+    if is_sca: 
+        sca_totals = get_findings_totals(application, rest_api_base, "SCA", verbose)
+
+    scans = application["scans"]
+    latest_sast_scan = ''
+    latest_dast_scan = ''
+    for scan in scans:
+        scan_date = scan["modified_date"]
+        if scan["scan_type"] == "DYNAMIC":
+            latest_dast_scan = scan_date
+        else:
+            latest_sast_scan = scan_date
+
+    results = {
+        'Application Name': application["profile"]["name"],
+        'Application ID': application["id"],
+        'Application GUID': application["guid"],
+
+        'Latest SAST Scan Name': get_latest_scan_name(xml_api_base, application, verbose),
+        
+        'Latest SAST Scan Date': latest_sast_scan
+    }
+    if is_dast:
+        results['Latest DAST Scan Date'] = latest_dast_scan
+
+    results.update({        
+            'SAST - Very High Findings (Open)': sast_totals["open"]["very_high"],
+            'SAST - High Findings (Open)': sast_totals["open"]["high"],
+            'SAST - Medium Findings (Open)': sast_totals["open"]["medium"],
+            'SAST - Low Findings (Open)': sast_totals["open"]["low"],
+            'SAST - Very Low Findings (Open)': sast_totals["open"]["very_low"],
+            'SAST - Informational Findings (Open)': sast_totals["open"]["informational"],
+
+            'SAST - Very High Findings (Closed)': sast_totals["open"]["very_high"],
+            'SAST - High Findings (Closed)': sast_totals["open"]["high"],
+            'SAST - Medium Findings (Closed)': sast_totals["open"]["medium"],
+            'SAST - Low Findings (Closed)': sast_totals["open"]["low"],
+            'SAST - Very Low Findings (Closed)': sast_totals["open"]["very_low"],
+            'SAST - Informational Findings (Closed)': sast_totals["open"]["informational"], 
+        })
+    if is_dast:
+        results.update({
+            'DAST - Very High Findings (Open)': dast_totals["open"]["very_high"],
+            'DAST - High Findings (Open)': dast_totals["open"]["high"],
+            'DAST - Medium Findings (Open)': dast_totals["open"]["medium"],
+            'DAST - Low Findings (Open)': dast_totals["open"]["low"],
+            'DAST - Very Low Findings (Open)': dast_totals["open"]["very_low"],
+            'DAST - Informational Findings (Open)': dast_totals["open"]["informational"],
+
+            'DAST - Very High Findings (Closed)': dast_totals["open"]["very_high"],
+            'DAST - High Findings (Closed)': dast_totals["open"]["high"],
+            'DAST - Medium Findings (Closed)': dast_totals["open"]["medium"],
+            'DAST - Low Findings (Closed)': dast_totals["open"]["low"],
+            'DAST - Very Low Findings (Closed)': dast_totals["open"]["very_low"],
+            'DAST - Informational Findings (Closed)': dast_totals["open"]["informational"]   
+        })
+    if is_sca:
+        results.update({
+            'SCA - Very High Findings (Open)': sca_totals["open"]["very_high"],
+            'SCA - High Findings (Open)': sca_totals["open"]["high"],
+            'SCA - Medium Findings (Open)': sca_totals["open"]["medium"],
+            'SCA - Low Findings (Open)': sca_totals["open"]["low"],
+            'SCA - Very Low Findings (Open)': sca_totals["open"]["very_low"],
+            'SCA - Informational Findings (Open)': sca_totals["open"]["informational"],
+
+            'SCA - Very High Findings (Closed)': sca_totals["open"]["very_high"],
+            'SCA - High Findings (Closed)': sca_totals["open"]["high"],
+            'SCA - Medium Findings (Closed)': sca_totals["open"]["medium"],
+            'SCA - Low Findings (Closed)': sca_totals["open"]["low"],
+            'SCA - Very Low Findings (Closed)': sca_totals["open"]["very_low"],
+            'SCA - Informational Findings (Closed)': sca_totals["open"]["informational"]   
+        })
+
+    return results
 
 def save_to_excel(applications, file_name):
     directory = os.path.dirname(file_name)
@@ -182,7 +274,7 @@ def save_to_excel(applications, file_name):
     else:
         print(f"ERROR: No findings found")
 
-def save_all_upload_scans(rest_api_base, xml_api_base, target_file, verbose):
+def save_all_scan_results(rest_api_base, xml_api_base, target_file, is_dast, is_sca, verbose):
     _, extension = os.path.splitext(target_file)
     if not extension or extension.lower() != ".csv":
         print(f"ERROR: File name '{target_file}' needs to be a CSV file.")
@@ -190,7 +282,7 @@ def save_all_upload_scans(rest_api_base, xml_api_base, target_file, verbose):
 
     applications = []
     for application in get_all_applications(rest_api_base, 0, verbose):
-        applications.append(get_application_results(application, rest_api_base, xml_api_base, verbose))
+        applications.append(get_application_results(application, rest_api_base, xml_api_base, is_dast, is_sca, verbose))
 
     save_to_excel(applications, target_file)
 
@@ -201,16 +293,20 @@ def main():
         description='This script will create an excel file with a summary of all your SAST scans')
         
         parser.add_argument('-t', '--target', help='CSV file to save results')
-        parser.add_argument('-d', '--debug', action='store_true', help='Set to enable verbose logging')
+        parser.add_argument('-d', '--dast', action='store_true', help='Set to enable fetching of DAST results')
+        parser.add_argument('-s', '--sca', action='store_true', help='Set to enable fetching of SCA results')
+        parser.add_argument('-v', '--verbose', action='store_true', help='Set to enable verbose logging')
 
         args = parser.parse_args()
 
         target_file = args.target
-        verbose = args.debug
+        is_dast = args.dast
+        is_sca = args.sca
+        verbose = args.verbose
 
         rest_api_base = get_rest_api_base() 
         xml_api_base = get_xml_api_base()
-        save_all_upload_scans(rest_api_base, xml_api_base, target_file, verbose)
+        save_all_scan_results(rest_api_base, xml_api_base, target_file, is_dast, is_sca, verbose)
 
     except requests.RequestException as e:
         print("An error occurred!")
