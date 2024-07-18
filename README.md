@@ -1,3 +1,5 @@
+**DEPRECATED**
+
 **Credit to Ricardo P for this script**
 
 Gets count of ALL findings for all available application profiles. Also includes latest scan names and dates.
